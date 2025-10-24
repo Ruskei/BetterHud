@@ -242,7 +242,6 @@ object TextManagerImpl : BetterHudManager, TextManager {
     }
 
     override fun reload(workingDirectory: File, info: ReloadInfo, resource: GlobalResource) {
-        println("| reload")
         val assetsFolder = workingDirectory.subFolder("assets")
         val fontFolder = workingDirectory.subFolder("fonts")
 
@@ -295,9 +294,6 @@ object TextManagerImpl : BetterHudManager, TextManager {
         val suppliers = mutableListOf<TextSupplier>()
         workingDirectory.subFolder("texts").forEachAllYaml(info.sender) { file, s, section ->
             runCatching {
-                println("| font $s")
-                println("| text file ${file.name}")
-                println("| type ${section.getAsString("type", "ttf").lowercase()}")
                 val fontDir = section["file"]?.asString()?.let {
                     File(fontFolder, it).ifNotExist { "this file doesn't exist: $it" }
                 }
@@ -346,18 +342,15 @@ object TextManagerImpl : BetterHudManager, TextManager {
                     }
 
                     "bitmap" -> {
-                        println("| bitmap!")
                         parseBitmapFont(
                             workingDirectory,
                             s,
                             resource.textures,
                             section["chars"].ifNull { "Unable to find 'chars' array." }.asObject()
                                 .also {
-                                    println("| chars obj: ${it.joinToString { (key, value) -> "$key => $value" }}!")
                                     it.forEach { e -> "| yada $e" }
                                 }
                                 .mapSubConfiguration { e, obj ->
-                                    println("| e($e): $obj")
                                     BitmapData(
                                         obj.get("codepoints").ifNull { "codepoints value not set." }.asArray()
                                             .map { y ->
@@ -497,28 +490,23 @@ object TextManagerImpl : BetterHudManager, TextManager {
         data: List<BitmapData>,
         yamlObject: YamlObject,
     ): TextSupplier {
-        println("| parsing $saveName")
         return synchronized(textCacheMap) {
             textCacheMap[TextCache(saveName, emptySet(), emptySet())]?.let { old ->
                 TextSupplier {
-                    println("| old")
                     TextElement(saveName, null, old.array, old.charWidth, old.imageTextScale, yamlObject)
                 }
             }
         } ?: run {
-            println("| run")
             val saveFontName = "font${++fontIndex}"
             TextSupplier {
                 val charWidthMap = intKeyMapOf<TextScale>()
                 val textArray = ArrayList<HudTextArray>()
                 val assetsFolder = workingDirectory.subFolder("assets")
-                println("| saveName: $saveName")
                 debug(ConfigManager.DebugLevel.ASSETS, "Generating bitmap text $saveName...")
                 data.forEachIndexed { i, d ->
                     val file = File(assetsFolder, d.file.replace('/', File.separatorChar))
                         .ifNotExist { "Unable to find this asset file: ${d.file}" }
                         .toImage()
-                    println("  | file ${d.file}")
                     if (d.codepoints.isEmpty()) throw RuntimeException("Codepoint is empty.")
                     if (file.height % d.codepoints.size != 0) throw RuntimeException("Image height ${file.height} cannot be divided to ${d.codepoints.size}.")
                     val codepointStream = d.codepoints.map { s ->
@@ -533,7 +521,6 @@ object TextManagerImpl : BetterHudManager, TextManager {
                     if (distinct.size != 1) throw RuntimeException("Codepoint length of bitmap does not same.")
                     val width = distinct[0]
                     val encode = "text_${saveFontName}_${i + 1}".encodeKey(EncodeManager.EncodeNamespace.TEXTURES)
-                    println("| encode $encode")
                     val name = "$encode.png"
 
                     val divWidth = file.width / width
@@ -554,8 +541,6 @@ object TextManagerImpl : BetterHudManager, TextManager {
                     PackGenerator.addTask(imageSaveFolder + name) {
                         file.toByteArray()
                     }
-
-                    println("| codepoints: ${d.codepoints}")
 
                     textArray += HudTextArray(
                         name,

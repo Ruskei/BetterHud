@@ -48,9 +48,7 @@ class HeadRenderer(
             var i = 0
             head.flatHead().forEach { next ->
                 val index = i++
-                comp.append(pixelGetter(index, color?.let {
-                    next * it
-                } ?: next))
+                comp.append(pixelGetter(index, color ?: next))
             }
             return comp
         }
@@ -78,12 +76,10 @@ class HeadRenderer(
             val main = head.mainHead()
             val hair = head.hairHead()
             for (index in 0..63) {
-                val next = color?.let {
-                    main[index] * it
-                } ?: main[index]
+                val next = color ?: main[index]
                 hair[index]?.let {
                     comp.append(headGetter(index, next))
-                        .append(pixelGetter(index, it, true))
+                        .append(pixelGetter(index, color ?: it, true))
                 } ?: comp.append(pixelGetter(index, next, false))
 
             }

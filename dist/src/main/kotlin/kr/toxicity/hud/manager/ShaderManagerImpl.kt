@@ -54,7 +54,6 @@ object ShaderManagerImpl : BetterHudManager, ShaderManager {
     }
 
     override fun addTagSupplier(type: ShaderType, supplier: ShaderTagSupplier) {
-        println("| adding tag supplier to type $type")
         tagSupplierMap[type] = tagSupplierMap[type]?.let {
             it + supplier
         } ?: supplier
@@ -205,7 +204,6 @@ object ShaderManagerImpl : BetterHudManager, ShaderManager {
         }
         return shaders.map { (key, args) ->
             val tagSupplier = (tagSupplierMap[key] ?: EMPTY_SUPPLIER).get()
-            println("$key => $args")
             key.shadersCoreName to buildString {
                 args.forEach write@ { string ->
                     var s = string
